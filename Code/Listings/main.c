@@ -5,16 +5,15 @@
 #include "autonet.h"
 
 #define TABLE_LENGTH 24
-#define Device_ID 0x080A
+#define Device_ID 0x0801
 
 void DesignChallengeOneProtocol(void);
 void lightLED(uint8_t);
-void TestCOM(void);
+
 
 int main(void)
 {
 	DesignChallengeOneProtocol();
-	//TestCOM();
 }
 
 void DesignChallengeOneProtocol(void){
@@ -49,10 +48,9 @@ void DesignChallengeOneProtocol(void){
 	setTimer(1,100,UNIT_MS);
 	setTimer(2,3000,UNIT_MS);
 
-  //===================================Network COnfiguration===================================
+	//===================================Network COnfiguration===================================
 	// Sensing for other's information
 	while(1){
-		update_group_info();
 
 		if(RF_Rx(Rx_msg,&rcvd_length,&rcvd_rssi)){
 			getPayloadLength(&payload_length,Rx_msg);
@@ -104,11 +102,11 @@ void DesignChallengeOneProtocol(void){
 	Table[IDindex+1]=Addr>>8;
 	Table[IDindex+2]=Addr;
 
-	Delay(1000);
+	Delay(5000);
 	
 	if(ID==8){
-		sprintf((char *)Tx_msg,"%s\r\n","start");
-		COM1_Tx(Tx_msg,7);
+		sprintf((char *)Tx_msg,"%s\n","====Routing Start====");
+		COM1_Tx(Tx_msg,23);
 		RF_Tx(0xffff,Table,Tx_length);
 		State = 1;
 	}
@@ -151,8 +149,10 @@ void DesignChallengeOneProtocol(void){
 				
 				if(ID==8){
 					//Print the result to UART!!!!
-					COM1_Tx(Table,TABLE_LENGTH);
-					
+					for(i=0; i<8; i++){
+						sprintf((char *)Tx_msg, "ID:%d, MAC:0x0%d0%d\n", Table[i*3], Table[i*3+1], Table[i*3+2]);
+						COM1_Tx(Tx_msg,17);
+					}
 				}
 				
 				RF_Tx(0xffff,Table,Tx_length);
@@ -177,7 +177,7 @@ void DesignChallengeOneProtocol(void){
 
 void lightLED(uint8_t ID){
 	uint8_t i=0;
-	uint8_t Tx_msg[TABLE_LENGTH];
+	uint8_t Tx_msg[TABLE_LENGTH]={0};
 	uint8_t Tx_length = TABLE_LENGTH;
 	
 	for(i=0; i<ID; i++){
@@ -193,51 +193,3 @@ void lightLED(uint8_t ID){
 		RF_Tx(0xffff,Tx_msg,Tx_length);
 	}
 }
-/*
-void TestCOM(void){
-	uint8_t Rx_msg[TABLE_LENGTH];
-	uint8_t Tx_msg[TABLE_LENGTH];
-	uint8_t Tx_length = TABLE_LENGTH;
-
-  uint8_t rcvd_length;
-	uint8_t rcvd_rssi;
-	uint8_t payload[TABLE_LENGTH];
-	uint8_t payload_length = TABLE_LENGTH;
-
-	uint8_t ID = 1;
-	uint8_t Table[TABLE_LENGTH]={0};
-	uint8_t IDindex;
-	uint8_t State = 0;
-	uint8_t TableFullCheck;
-	uint8_t i;
-	
-	uint8_t Type;
-	uint16_t Addr;
-	uint8_t radio_channel;
-	uint16_t radio_panID;
-	
-	
-	Type = Type_Light;
-	Addr = 0x0801;
-	radio_channel = 25;
-	radio_panID = 0x0008;
-
-	Initial(Addr,Type, radio_channel, radio_panID);
-	setTimer(1,100,UNIT_MS);
-	setTimer(2,3000,UNIT_MS);
-
-	IDindex = (ID-1)*3;
-	Table[IDindex]=ID;
-	Table[IDindex+1]=Addr>>8;
-	Table[IDindex+2]=Addr;
-	
-	while(1){
-
-		if(checkTimer(1)) {
-			COM1_Tx(Table,TABLE_LENGTH);
-		}
-	}
-}
-*/
-
-
